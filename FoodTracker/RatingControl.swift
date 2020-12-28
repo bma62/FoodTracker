@@ -7,13 +7,18 @@
 
 import UIKit
 
-@IBDesignable class RatingControl: UIStackView {
+@IBDesignable class RatingControl: UIStackView { // allows IB to have live-copy of this control class
     
     // MARK: Properties
     
     private var ratingButtons = [UIButton]()
     
-    var rating = 0
+    var rating = 0 {
+        // after rating is updated, also update the appearance of buttons
+        didSet {
+            updateButtonSelectionStates()
+        }
+    }
     
     // properties that can be changed in the IB and refresh the control every time these properties change
     @IBInspectable var starSize: CGSize = CGSize(width: 44.0, height: 44.0) {
@@ -51,10 +56,21 @@ import UIKit
         }
         ratingButtons.removeAll()
         
+        // load button images using bundle explicitly so IB can access the images properly
+        let bundle = Bundle(for: type(of: self)) // the app's main bundle
+        let filledStar = UIImage(named: "filledStar", in: bundle, compatibleWith: self.traitCollection)
+        let emptyStar = UIImage(named: "emptyStar", in: bundle, compatibleWith: self.traitCollection)
+        let highlightedStar = UIImage(named: "highlightedStar", in: bundle, compatibleWith: self.traitCollection)
+        
         for _ in 0..<starCount {
             // create the button
             let button = UIButton()
-            button.backgroundColor = UIColor.red
+            
+            // set the button images
+            button.setImage(emptyStar, for: .normal)
+            button.setImage(filledStar, for: .selected)
+            button.setImage(highlightedStar, for: .highlighted)
+            button.setImage(highlightedStar, for: [.highlighted, .selected])
             
             // add constraints
             button.translatesAutoresizingMaskIntoConstraints = false // disable automatically generated constraints for programmatically created views
@@ -70,12 +86,38 @@ import UIKit
             // add the new button to the rating button array
             ratingButtons.append(button)
         }
+        
+        // after buttons are added to the control, update their states as well
+        updateButtonSelectionStates()
+    }
+    
+    private func updateButtonSelectionStates() {
+        for (index, button) in ratingButtons.enumerated() {
+            // if the index of a button is less than rating, that button should be selected
+            button.isSelected = index < rating
+        }
     }
     
     // MARK: Button Action
     
     @objc func ratingButtonTapped(button: UIButton) {
-        print("Button pressed 👍")
+        
+        // try to find the button in array. if nil is returned, terminate app
+        guard let index = ratingButtons.firstIndex(of: button) else {
+            fatalError("The button, \(button), is not in the ratingButtons array: \(ratingButtons)")
+        }
+        
+        // calculate the rating of the selected button
+        let selectedRating = index + 1
+        
+        if selectedRating == rating {
+            // if the selected star represents the current rating, reset the rating to 0
+            rating = 0
+        } else {
+            // otherwise, set the rating to the selected star
+            rating = selectedRating
+        }
     }
+    
 
 }
