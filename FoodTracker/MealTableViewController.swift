@@ -29,19 +29,31 @@ class MealTableViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of rows
-        return 0
+        // as we only have one section, number of rows is simply how many meals are in the array
+        return meals.count
     }
 
-    /*
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
-
+        
+        // table view cells are reused and should be dequeued using a cell identifier
+        let cellIdentifier = "MealTableViewCell"
+        
+        // reuse a cell from the table view and attempt to downcast it to our custom cell subclass, MealTableviewCell
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: cellIdentifier, for: indexPath) as? MealTableViewCell else {
+            fatalError("The dequeued cell is not an instance of MealTableViewCell")
+        }
+        
+        // fetches the appropriate meal for the data source layout
+        let meal = meals[indexPath.row]
+        
         // Configure the cell...
+        cell.nameLabel.text = meal.name
+        cell.photoImageView.image = meal.photo
+        cell.ratingControl.rating = meal.rating
 
         return cell
     }
-    */
+    
 
     /*
     // Override to support conditional editing of the table view.
