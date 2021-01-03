@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import os.log
 
 class MealViewController: UIViewController, UITextFieldDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate { // for navigation responsibilities
     
@@ -13,6 +14,10 @@ class MealViewController: UIViewController, UITextFieldDelegate, UIImagePickerCo
     @IBOutlet weak var nameTextField: UITextField!
     @IBOutlet weak var photoImageView: UIImageView!
     @IBOutlet weak var ratingControl: RatingControl!
+    @IBOutlet weak var saveButton: UIBarButtonItem!
+    
+    // this value is either passed by 'MealTableViewController' in 'prepare(for:sender:)' or constructed as part of adding a new meal
+    var meal: Meal?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -51,6 +56,28 @@ class MealViewController: UIViewController, UITextFieldDelegate, UIImagePickerCo
         
         // Dismiss the picker
         dismiss(animated: true, completion: nil)
+    }
+    
+    // MARK: Navigation
+    
+    // this method lets you configure a view controller before it's presented
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        
+        // good habit to call super when overriding
+        super.prepare(for: segue, sender: sender)
+        
+        // configure the destination view controller only when the save button is pressed
+        guard let button = sender as? UIBarButtonItem, button === saveButton else {
+            os_log("The save button was not pressed, cancelling", log: OSLog.default, type: .debug)
+            return
+        }
+        
+        let name = nameTextField.text ?? "" // return text if not nil, and return "" when text is nil
+        let photo = photoImageView.image
+        let rating = ratingControl.rating
+        
+        // set the meal to be passed to MealTableViewController if save is pressed
+        meal = Meal(name: name, photo: photo, rating: rating)
     }
     
     // MARK: Actions
