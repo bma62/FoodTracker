@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import os.log
 
 class MealTableViewController: UITableViewController {
 
@@ -16,6 +17,9 @@ class MealTableViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        // use the edit button item provided by the table view controller
+        navigationItem.leftBarButtonItem = editButtonItem
+        
         // load the sample data
         loadSampleMeals()
         
@@ -97,24 +101,58 @@ class MealTableViewController: UITableViewController {
         // try to downcast the segue's source view controller to MealViewController because we need to work with that type
         if let sourceViewController = sender.source as? MealViewController, let meal = sourceViewController.meal {
             
-            // compute location in the table view to insert the new meal
-            let newIndexPath = IndexPath(row: meals.count, section: 0)
-            
-            // add a new meal
-            meals.append(meal)
-            tableView.insertRows(at: [newIndexPath], with: .automatic)
+            // if a row is selected, user tapped a cell to edit a Meal
+            if let selectedIndexPath = tableView.indexPathForSelectedRow {
+                //update an existing meal
+                meals[selectedIndexPath.row] = meal
+                tableView.reloadRows(at: [selectedIndexPath], with: .automatic)
+            }
+            else {
+                // compute location in the table view to insert the new meal
+                let newIndexPath = IndexPath(row: meals.count, section: 0)
+                
+                // add a new meal
+                meals.append(meal)
+                tableView.insertRows(at: [newIndexPath], with: .automatic)
+            }
         }
     }
     
-    /*
     // MARK: - Navigation
 
     // In a storyboard-based application, you will often want to do a little preparation before navigation
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
+        
+        super.prepare(for: segue, sender: sender)
+        
+        // in case of nil, replace with "" to simplify switch logic
+        switch (segue.identifier ?? "") {
+        
+        case "AddItem":
+            os_log("Adding a new meal.", log: OSLog.default, type: .debug)
+            
+        case "ShowDetail":
+            guard let mealDetailViewController = segue.destination as? MealViewController else {
+                fatalError("Unexpected destination: \(segue.destination)")
+            }
+            
+            guard let selectedMealCell = sender as? MealTableViewCell else {
+                fatalError("Unexpected sender: \(sender)")
+            }
+            
+            guard let indexPath = tableView.indexPath(for: selectedMealCell) else {
+                fatalError("The selected cell is not being displayed by the table")
+            }
+            
+            // retrieve the selected meal and pass it to the destination view controller for display
+            let selectedMeal = meals[indexPath.row]
+            mealDetailViewController.meal = selectedMeal
+            
+        default:
+            fatalError("Unexpected segue identifier: \(segue.identifier)")
+        }
     }
-    */
+    
 
     // MARK: Private Methods
     
