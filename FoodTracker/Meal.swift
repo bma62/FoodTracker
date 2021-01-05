@@ -6,10 +6,18 @@
 //
 
 import UIKit
+import os.log
 
-class Meal {
-    
+class Meal: NSObject, NSCoding {
+        
     // MARK: Properties
+    
+    struct PropertyKey {
+        // static vars are attached to the class and shared among instances of the class
+        static let name = "name"
+        static let photo = "photo"
+        static let rating = "rating"
+    }
     
     var name: String
     var photo: UIImage? // meals may not have photos, so this is optional
@@ -35,6 +43,24 @@ class Meal {
         self.name = name
         self.photo = photo
         self.rating = rating
+    }
+    
+    // MARK: NSCoding
+    
+    func encode(with coder: NSCoder) {
+        coder.encode(name, forKey: PropertyKey.name)
+        coder.encode(photo, forKey: PropertyKey.photo)
+        coder.encode(rating, forKey: PropertyKey.rating)
+    }
+    
+    // convenience means this is a secondary initializer and it must call a primary initializer from the same class
+    required convenience init?(coder: NSCoder) {
+        
+        // the name is required. if we cannot decode a name string, the initializer should fail
+        guard let name = coder.decodeObject(forKey: PropertyKey.name) as? String else {
+            os_log("Unable to decode the name for a Meal object.")
+            return nil
+        }
     }
 }
 
