@@ -22,6 +22,12 @@ class Meal: NSObject, NSCoding {
     var name: String
     var photo: UIImage? // meals may not have photos, so this is optional
     var rating: Int
+    
+    // MARK: Archiving Paths
+
+    // look up the app's documents directory and force unwrap the first match (should contain only 1 match so this is safe)
+    static let DocumentsDirectory = FileManager().urls(for: .documentDirectory, in: .userDomainMask).first!
+    static let ArchiveURL = DocumentsDirectory.appendingPathComponent("meals") // create a file URL by appending to documents URL
 
     // MARK: Initialization
     
@@ -61,6 +67,14 @@ class Meal: NSObject, NSCoding {
             os_log("Unable to decode the name for a Meal object.")
             return nil
         }
+        
+        // because photo is an optional property of Meal, just use conditional downcast
+        let photo = coder.decodeObject(forKey: PropertyKey.photo) as? UIImage
+        
+        let rating = coder.decodeInteger(forKey: PropertyKey.rating)
+        
+        // must call designated initializer
+        self.init(name: name, photo: photo, rating: rating)
     }
 }
 

@@ -20,8 +20,14 @@ class MealTableViewController: UITableViewController {
         // use the edit button item provided by the table view controller
         navigationItem.leftBarButtonItem = editButtonItem
         
-        // load the sample data
-        loadSampleMeals()
+        // if there are any saved meals, add them to the table
+        if let savedMeals = loadMeals() {
+            meals += savedMeals
+        }
+        else {
+            // load the sample data if there are no stored meals
+            loadSampleMeals()
+        }
         
     }
 
@@ -69,6 +75,7 @@ class MealTableViewController: UITableViewController {
         if editingStyle == .delete {
             // Delete the row from the data source
             meals.remove(at: indexPath.row)
+            saveMeals()
             tableView.deleteRows(at: [indexPath], with: .fade)
         } else if editingStyle == .insert {
             // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
@@ -111,6 +118,9 @@ class MealTableViewController: UITableViewController {
                 meals.append(meal)
                 tableView.insertRows(at: [newIndexPath], with: .automatic)
             }
+            
+            // save the meals after each editing/adding
+            saveMeals()
         }
     }
     
@@ -173,4 +183,37 @@ class MealTableViewController: UITableViewController {
         
         meals += [meal1, meal2, meal3]
     }
+    
+    private func saveMeals() {
+        
+        do {
+            let data = try NSKeyedArchiver.archivedData(withRootObject: meals, requiringSecureCoding: false) // make data with meals
+            try data.write(to: Meal.ArchiveURL)
+            os_log("Meals successfully saved.", type: .debug)
+        } catch {
+            os_log("Failed to save meals...", type: .error)
+        }
+    }
+    
+    private func loadMeals() -> [Meal]? {
+        
+        if let nsData = NSData(contentsOf: Meal.ArchiveURL) {
+            
+            do {
+                
+                let data = Data(referencing: nsData)
+                
+                if let savedMeals = try NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(data) as? [Meal] {
+                    return savedMeals
+                }
+            } catch {
+                os_log("Couldn't read meals", type:.debug)
+                return nil
+            }
+        }
+        
+        return nil
+        
+    }
+
 }
